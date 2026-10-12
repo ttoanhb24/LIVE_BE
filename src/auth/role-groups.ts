@@ -21,4 +21,11 @@ export const MEMBER_ROLES = [UserRole.MEMBER] as const;
 
 export const ADMIN_ONLY_ROLES = [UserRole.ADMIN] as const;
 
+/**
+ * Mọi role đã đăng nhập. Dùng cho handler GET chỉ đọc trong controller đã gắn
+ * @Roles(...STAFF_ROLES) ở cấp class: @Roles ở handler ghi đè class, nên MEMBER
+ * xem được còn thêm/sửa/xóa vẫn chỉ STAFF.
+ */
+export const ALL_ROLES = [UserRole.MEMBER, UserRole.LEADER, UserRole.ADMIN] as const;
+
 export type StaffRole = (typeof STAFF_ROLES)[number];
