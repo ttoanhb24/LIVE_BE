@@ -3,6 +3,7 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { LiveLookupKind } from '@prisma/client';
+import { CloudinaryStorageService } from '../src/cloudinary/cloudinary-storage.service';
 import { PrismaService } from '../src/prisma/prisma.service';
 import { ReportSheetClient } from '../src/session-reports/report-sheet/report-sheet.client';
 import { SessionReportsService } from '../src/session-reports/session-reports.service';
@@ -29,6 +30,7 @@ const inputDto = {
   retentionRate: 42.5,
   orderCount: 15,
   impressionCount: 8000,
+  imageUrl: 'https://res.cloudinary.com/jsmkvfyg/image/upload/v1/LIVE_VCB/session-reports/abc.jpg',
 };
 
 const lookups = [
@@ -64,6 +66,7 @@ describe('SessionReportsService', () => {
         SessionReportsService,
         { provide: PrismaService, useValue: prisma },
         { provide: ReportSheetClient, useValue: reportSheet },
+        { provide: CloudinaryStorageService, useValue: {} },
       ],
     }).compile();
     service = moduleRef.get(SessionReportsService);

@@ -22,6 +22,8 @@ export interface SessionReportResponse {
   readonly retentionRate: number;
   readonly orderCount: number;
   readonly impressionCount: number;
+  /** null với báo cáo nộp trước khi form có ô ảnh. */
+  readonly imageUrl: string | null;
   readonly createdAt: string;
   readonly updatedAt: string;
 }
@@ -54,6 +56,7 @@ export function mapSessionReportToResponse(report: SessionReportWithLookups): Se
     retentionRate: report.retentionRate.toNumber(),
     orderCount: report.orderCount,
     impressionCount: report.impressionCount,
+    imageUrl: report.imageUrl,
     createdAt: report.createdAt.toISOString(),
     updatedAt: report.updatedAt.toISOString(),
   };

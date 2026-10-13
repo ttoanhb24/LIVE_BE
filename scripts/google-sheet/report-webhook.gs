@@ -1,6 +1,7 @@
 /**
  * Web App nhận báo cáo "Kết thúc ca" từ LIVE_BE và ghi vào file báo cáo tổng
- * "QL&PT Livestreams Viễn Chí Bảo" (tab "BCDT T{tháng}/{năm}", cột B → N).
+ * "QL&PT Livestreams Viễn Chí Bảo" (tab "BCDT T{tháng}/{năm}", cột B → O; cột O là link ảnh báo
+ * cáo — nên đổi tiêu đề cột O của Bảng từ "Column 14" thành "Ảnh báo cáo").
  * Phía BE: src/session-reports/report-sheet/report-sheet.client.ts.
  *
  * CÀI ĐẶT — làm một lần, bằng tài khoản có quyền chỉnh sửa file:
@@ -24,8 +25,8 @@ const FIRST_DATA_ROW = 3;
 const COL_DATE = 2;
 /** Cột C "Tên" — cũng là cột có ô chọn danh sách nhân sự. */
 const COL_NAME = 3;
-/** Số cột ghi: B → N. */
-const ROW_WIDTH = 13;
+/** Số cột ghi: B → O (O = link ảnh báo cáo). */
+const ROW_WIDTH = 14;
 /** Hai người nộp cùng lúc: người sau chờ tối đa ngần này để không ghi đè cùng một dòng. */
 const LOCK_WAIT_MS = 20000;
 
@@ -125,6 +126,8 @@ function appendReport_(row) {
         row.retentionSeconds,
         row.orderCount,
         row.impressionCount,
+        // BE cũ (chưa có ô ảnh) không gửi trường này — để ô trống thay vì chữ "undefined".
+        row.imageUrl || '',
       ],
     ]);
     SpreadsheetApp.flush();

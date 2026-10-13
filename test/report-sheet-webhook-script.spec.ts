@@ -114,10 +114,11 @@ const row = {
   retentionSeconds: 20,
   orderCount: 11,
   impressionCount: 271340,
+  imageUrl: 'https://res.cloudinary.com/jsmkvfyg/image/upload/v1/LIVE_VCB/session-reports/abc.jpg',
 };
 
 describe('Apps Script ghi báo cáo vào sheet', () => {
-  it('ghi vào dòng ngay sau dòng cuối có dữ liệu (bỏ qua dòng mẫu trống), đúng 13 cột B → N', () => {
+  it('ghi vào dòng ngay sau dòng cuối có dữ liệu (bỏ qua dòng mẫu trống), đúng 14 cột B → O', () => {
     const tab = fakeTab('BCDT T10/2026', 137);
     const { post, lock } = load([fakeTab('BCDT T9/2026', 200), tab]);
 
@@ -126,15 +127,26 @@ describe('Apps Script ghi báo cáo vào sheet', () => {
     expect(result).toEqual({ ok: true, tab: 'BCDT T10/2026', row: 140 });
     expect(tab.writes).toHaveLength(1);
     const [write] = tab.writes;
-    expect([write.row, write.col, write.numRows, write.numCols]).toEqual([140, 2, 1, 13]);
+    expect([write.row, write.col, write.numRows, write.numCols]).toEqual([140, 2, 1, 14]);
     const [date, ...rest] = write.values[0] as [Date, ...unknown[]];
     expect([date.getFullYear(), date.getMonth() + 1, date.getDate()]).toEqual([2026, 10, 13]);
     expect(rest).toEqual([
       'Ngọc Sơn', 'Sáng', 'Live mới', '9h - 13h', 'Team 1', 'Huyk.xuongchetac2',
-      4, 19957700, 5350, 20, 11, 271340,
+      4, 19957700, 5350, 20, 11, 271340, row.imageUrl,
     ]);
     expect(lock.tryLock).toHaveBeenCalled();
     expect(lock.releaseLock).toHaveBeenCalled();
+  });
+
+  it('dòng không có link ảnh (BE cũ) → cột O để trống, không ghi chữ "undefined"', () => {
+    const tab = fakeTab('BCDT T10/2026', 0, 2);
+    const { post } = load([tab]);
+    const { imageUrl: _omit, ...withoutImage } = row;
+    void _omit;
+
+    post({ secret: 's3cret', action: 'append', row: withoutImage });
+
+    expect((tab.writes[0].values[0] as unknown[])[13]).toBe('');
   });
 
   it.each([' BCDT T10/2026', 'BCDT T10/26', 'bcdt  t10/2026 '])(

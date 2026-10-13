@@ -10,11 +10,18 @@ import {
   Min,
   MinLength,
 } from 'class-validator';
+import { SESSION_REPORT_IMAGE_URL_PATTERN } from '../session-report-image.constants';
 import { SESSION_REPORT_LIMITS } from '../session-report-limits';
 
 export class CreateSessionReportDto {
   @IsUUID()
   sessionId!: string;
+
+  /** Link ảnh chụp số liệu ca — lấy từ POST /session-reports/upload-image. Bắt buộc. */
+  @IsString({ message: 'Chọn ảnh báo cáo' })
+  @MaxLength(500)
+  @Matches(SESSION_REPORT_IMAGE_URL_PATTERN, { message: 'Ảnh báo cáo không hợp lệ' })
+  imageUrl!: string;
 
   @Matches(/^\d{4}-\d{2}-\d{2}$/, { message: 'Ngày live phải là yyyy-MM-dd' })
   liveDate!: string;

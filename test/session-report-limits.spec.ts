@@ -20,6 +20,7 @@ const valid = {
   retentionRate: '20',
   orderCount: '11',
   impressionCount: '271340',
+  imageUrl: 'https://res.cloudinary.com/jsmkvfyg/image/upload/v1/LIVE_VCB/session-reports/abc.jpg',
 };
 
 async function messages(patch: Record<string, string>): Promise<string[]> {

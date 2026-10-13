@@ -20,7 +20,7 @@ describe('splitShiftName', () => {
 });
 
 describe('buildReportSheetRow', () => {
-  it('đổ đủ 13 cột B → N theo thứ tự của tab BCDT', () => {
+  it('đổ đủ 14 cột B → O theo thứ tự của tab BCDT', () => {
     const report = {
       liveDate: new Date('2026-10-13T00:00:00.000Z'),
       staffName: 'Ngọc Sơn',
@@ -34,6 +34,7 @@ describe('buildReportSheetRow', () => {
       retentionRate: decimal(20),
       orderCount: 11,
       impressionCount: 271340,
+      imageUrl: 'https://res.cloudinary.com/jsmkvfyg/image/upload/v1/LIVE_VCB/session-reports/abc.jpg',
     } as unknown as SessionReportWithLookups;
 
     expect(buildReportSheetRow(report)).toEqual({
@@ -50,6 +51,7 @@ describe('buildReportSheetRow', () => {
       retentionSeconds: 20,
       orderCount: 11,
       impressionCount: 271340,
+      imageUrl: 'https://res.cloudinary.com/jsmkvfyg/image/upload/v1/LIVE_VCB/session-reports/abc.jpg',
     });
   });
 });

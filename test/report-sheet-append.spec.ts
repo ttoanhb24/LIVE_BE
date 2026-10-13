@@ -20,6 +20,7 @@ const row: ReportSheetRow = {
   retentionSeconds: 24,
   orderCount: 2,
   impressionCount: 0,
+  imageUrl: 'https://res.cloudinary.com/jsmkvfyg/image/upload/v1/LIVE_VCB/session-reports/abc.jpg',
 };
 
 function client(env: Record<string, string> = {}) {

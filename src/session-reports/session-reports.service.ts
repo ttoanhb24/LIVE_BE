@@ -5,6 +5,8 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { LiveLookupKind, Prisma } from '@prisma/client';
+import { randomUUID } from 'node:crypto';
+import { CloudinaryStorageService } from '../cloudinary/cloudinary-storage.service';
 import { PrismaService } from '../prisma/prisma.service';
 import type { PaginatedResponse } from '../common/interfaces/paginated-response.interface';
 import { buildPaginatedMeta } from '../common/pagination/paginate';
@@ -17,6 +19,12 @@ import {
 } from './mappers/session-report.mapper';
 import { buildReportSheetRow } from './report-sheet/report-sheet-row';
 import { ReportSheetClient, type SheetSyncResult } from './report-sheet/report-sheet.client';
+import {
+  SESSION_REPORT_IMAGE_MAX_BYTES,
+  SESSION_REPORT_IMAGE_MIMES,
+  SESSION_REPORT_IMAGE_PATH,
+  type SessionReportImageUploadResponse,
+} from './session-report-image.constants';
 
 /** Phản hồi khi nộp báo cáo: báo cáo đã lưu + kết quả chép sang Google Sheet. */
 export type CreateSessionReportResponse = SessionReportResponse & {
@@ -51,7 +59,37 @@ export class SessionReportsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly reportSheet: ReportSheetClient,
+    private readonly cloudinary: CloudinaryStorageService,
   ) {}
+
+  /** Ảnh chụp số liệu ca — FE tải lên trước, lấy `imageUrl` gửi kèm khi nộp báo cáo. */
+  async uploadImage(
+    file: Express.Multer.File | undefined,
+  ): Promise<SessionReportImageUploadResponse> {
+    if (!file) {
+      throw new BadRequestException('Vui lòng chọn ảnh báo cáo');
+    }
+    if (
+      !SESSION_REPORT_IMAGE_MIMES.includes(
+        file.mimetype as (typeof SESSION_REPORT_IMAGE_MIMES)[number],
+      )
+    ) {
+      throw new BadRequestException('Ảnh phải là JPG, PNG hoặc WEBP');
+    }
+    if (file.size > SESSION_REPORT_IMAGE_MAX_BYTES) {
+      throw new BadRequestException('Ảnh không được lớn hơn 10MB');
+    }
+
+    const ext = file.originalname.includes('.')
+      ? file.originalname.slice(file.originalname.lastIndexOf('.'))
+      : '.jpg';
+    const uploaded = await this.cloudinary.uploadObject(
+      `${SESSION_REPORT_IMAGE_PATH}/${randomUUID()}${ext}`,
+      file.buffer,
+      file.mimetype,
+    );
+    return { imageUrl: uploaded.publicUrl };
+  }
 
   async findAll(query: ListSessionReportsQueryDto): Promise<PaginatedResponse<SessionReportResponse>> {
     const page = query.page ?? 1;
@@ -121,6 +159,7 @@ export class SessionReportsService {
         retentionRate: new Prisma.Decimal(dto.retentionRate),
         orderCount: dto.orderCount,
         impressionCount: dto.impressionCount,
+        imageUrl: dto.imageUrl,
       },
       include: reportInclude,
     });

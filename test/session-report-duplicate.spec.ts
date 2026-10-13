@@ -3,6 +3,7 @@
 import { ConflictException } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { LiveLookupKind } from '@prisma/client';
+import { CloudinaryStorageService } from '../src/cloudinary/cloudinary-storage.service';
 import { PrismaService } from '../src/prisma/prisma.service';
 import { ReportSheetClient } from '../src/session-reports/report-sheet/report-sheet.client';
 import { SessionReportsService } from '../src/session-reports/session-reports.service';
@@ -27,6 +28,7 @@ const dto = {
   retentionRate: 20,
   orderCount: 11,
   impressionCount: 271340,
+  imageUrl: 'https://res.cloudinary.com/jsmkvfyg/image/upload/v1/LIVE_VCB/session-reports/abc.jpg',
 };
 
 describe('Chặn nộp trùng báo cáo ca', () => {
@@ -53,6 +55,7 @@ describe('Chặn nộp trùng báo cáo ca', () => {
         SessionReportsService,
         { provide: PrismaService, useValue: prisma },
         { provide: ReportSheetClient, useValue: reportSheet },
+        { provide: CloudinaryStorageService, useValue: {} },
       ],
     }).compile();
     service = moduleRef.get(SessionReportsService);

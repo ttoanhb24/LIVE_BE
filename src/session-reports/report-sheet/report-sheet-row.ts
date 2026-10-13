@@ -1,9 +1,9 @@
 import type { SessionReportWithLookups } from '../mappers/session-report.mapper';
 
 /**
- * Một dòng của tab "BCDT T{tháng}/{năm}" trong file báo cáo tổng, đúng thứ tự cột B → N:
+ * Một dòng của tab "BCDT T{tháng}/{năm}" trong file báo cáo tổng, đúng thứ tự cột B → O:
  * Ngày live · Tên · Ca live · Phân loại live · Giờ live · Team · Kênh · Tổng giờ live ·
- * Doanh thu · View · Tỷ lệ giữ chân (giây) · Tổng đơn · Lượt hiển thị.
+ * Doanh thu · View · Tỷ lệ giữ chân (giây) · Tổng đơn · Lượt hiển thị · Ảnh báo cáo.
  */
 export interface ReportSheetRow {
   /** yyyy-MM-dd — Apps Script đổi thành ô ngày thật để công thức theo ngày của sheet cộng được. */
@@ -20,6 +20,8 @@ export interface ReportSheetRow {
   readonly retentionSeconds: number;
   readonly orderCount: number;
   readonly impressionCount: number;
+  /** Cột O — link ảnh chụp số liệu ca; rỗng với báo cáo cũ chưa có ảnh. */
+  readonly imageUrl: string;
 }
 
 const SHIFT_WITH_HOURS = /^(.+?)\s*\((.+)\)\s*$/;
@@ -50,5 +52,6 @@ export function buildReportSheetRow(report: SessionReportWithLookups): ReportShe
     retentionSeconds: report.retentionRate.toNumber(),
     orderCount: report.orderCount,
     impressionCount: report.impressionCount,
+    imageUrl: report.imageUrl ?? '',
   };
 }
