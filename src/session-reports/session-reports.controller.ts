@@ -5,8 +5,11 @@ import type { DailyRankingsResponse } from './daily-rankings';
 import { CreateSessionReportDto } from './dto/create-session-report.dto';
 import { DailyRankingsQueryDto } from './dto/daily-rankings-query.dto';
 import { ListSessionReportsQueryDto } from './dto/list-session-reports-query.dto';
-import type { SessionReportResponse } from './mappers/session-report.mapper';
-import { SessionReportsService } from './session-reports.service';
+import { StaffNamesQueryDto } from './dto/staff-names-query.dto';
+import {
+  SessionReportsService,
+  type CreateSessionReportResponse,
+} from './session-reports.service';
 
 /** Nhân sự nộp sau ca. Không gắn @Roles — MEMBER cũng gọi được. */
 @Controller('session-reports')
@@ -25,11 +28,17 @@ export class SessionReportsController {
     return this.sessionReportsService.dailyRankings(query.from, query.to);
   }
 
+  /** Danh sách tên cho form "Kết thúc ca" — cùng người nộp nên không gắn @Roles. */
+  @Get('staff-names')
+  staffNames(@Query() query: StaffNamesQueryDto): Promise<{ names: string[] }> {
+    return this.sessionReportsService.staffNames(query.liveDate);
+  }
+
   @Post()
   create(
     @Body() dto: CreateSessionReportDto,
     @CurrentUser() user: JwtPayloadUser,
-  ): Promise<SessionReportResponse> {
+  ): Promise<CreateSessionReportResponse> {
     return this.sessionReportsService.create(dto, user.id);
   }
 }

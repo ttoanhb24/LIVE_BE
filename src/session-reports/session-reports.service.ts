@@ -1,4 +1,9 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { LiveLookupKind, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import type { PaginatedResponse } from '../common/interfaces/paginated-response.interface';
@@ -10,6 +15,18 @@ import {
   mapSessionReportToResponse,
   type SessionReportResponse,
 } from './mappers/session-report.mapper';
+import { buildReportSheetRow } from './report-sheet/report-sheet-row';
+import { ReportSheetClient, type SheetSyncResult } from './report-sheet/report-sheet.client';
+
+/** Phản hồi khi nộp báo cáo: báo cáo đã lưu + kết quả chép sang Google Sheet. */
+export type CreateSessionReportResponse = SessionReportResponse & {
+  readonly sheetSync: SheetSyncResult;
+};
+
+function formatViDate(isoDate: string): string {
+  const [year, month, day] = isoDate.split('-');
+  return `${day}/${month}/${year}`;
+}
 
 const reportInclude = {
   shift: true,
@@ -31,7 +48,10 @@ function liveDateRange(from?: string, to?: string): Prisma.SessionReportWhereInp
 
 @Injectable()
 export class SessionReportsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly reportSheet: ReportSheetClient,
+  ) {}
 
   async findAll(query: ListSessionReportsQueryDto): Promise<PaginatedResponse<SessionReportResponse>> {
     const page = query.page ?? 1;
@@ -69,7 +89,10 @@ export class SessionReportsService {
     return buildDailyRankings(groups);
   }
 
-  async create(dto: CreateSessionReportDto, submittedById: string): Promise<SessionReportResponse> {
+  async create(
+    dto: CreateSessionReportDto,
+    submittedById: string,
+  ): Promise<CreateSessionReportResponse> {
     const session = await this.prisma.liveSession.findUnique({
       where: { id: dto.sessionId },
       select: { id: true },
@@ -78,13 +101,15 @@ export class SessionReportsService {
       throw new NotFoundException('Không tìm thấy phiên live');
     }
 
-    await this.ensureLookups(dto);
+    const lookupNames = await this.ensureLookups(dto);
+    const liveDate = new Date(`${dto.liveDate}T00:00:00.000Z`);
+    await this.ensureNotSubmitted(dto, liveDate, lookupNames);
 
     const report = await this.prisma.sessionReport.create({
       data: {
         sessionId: dto.sessionId,
         submittedById,
-        liveDate: new Date(`${dto.liveDate}T00:00:00.000Z`),
+        liveDate,
         staffName: dto.staffName,
         shiftId: dto.shiftId,
         liveTypeId: dto.liveTypeId,
@@ -100,10 +125,45 @@ export class SessionReportsService {
       include: reportInclude,
     });
 
-    return mapSessionReportToResponse(report);
+    // Sau khi lưu DB mới chép sang sheet: sheet lỗi thì báo cáo vẫn còn, FE báo để nhập tay.
+    const sheetSync = await this.reportSheet.appendRow(buildReportSheetRow(report));
+
+    return { ...mapSessionReportToResponse(report), sheetSync };
   }
 
-  private async ensureLookups(dto: CreateSessionReportDto): Promise<void> {
+  /** Tên trong ô chọn cột "Tên" của sheet báo cáo — FE dùng làm danh sách chọn. */
+  async staffNames(liveDate: string): Promise<{ names: string[] }> {
+    return { names: await this.reportSheet.staffNames(liveDate) };
+  }
+
+  /**
+   * Một người chỉ nộp một báo cáo cho mỗi (ngày, ca, kênh) — đúng một dòng như sheet báo cáo tổng.
+   * Nộp lại sẽ nhân đôi doanh thu/view trên bảng xếp hạng và trên KPI của sheet.
+   */
+  private async ensureNotSubmitted(
+    dto: CreateSessionReportDto,
+    liveDate: Date,
+    lookupNames: Map<string, string>,
+  ): Promise<void> {
+    const existing = await this.prisma.sessionReport.findFirst({
+      where: {
+        liveDate,
+        shiftId: dto.shiftId,
+        channelId: dto.channelId,
+        staffName: { equals: dto.staffName, mode: 'insensitive' },
+      },
+      select: { id: true },
+    });
+    if (existing) {
+      throw new ConflictException(
+        `${dto.staffName} đã nộp báo cáo ca ${lookupNames.get(dto.shiftId)} kênh ` +
+          `${lookupNames.get(dto.channelId)} ngày ${formatViDate(dto.liveDate)}`,
+      );
+    }
+  }
+
+  /** Kiểm 4 danh mục đúng loại; trả `id → tên` để dùng trong thông báo lỗi. */
+  private async ensureLookups(dto: CreateSessionReportDto): Promise<Map<string, string>> {
     const expected = new Map<string, LiveLookupKind>([
       [dto.shiftId, LiveLookupKind.SHIFT],
       [dto.liveTypeId, LiveLookupKind.LIVE_TYPE],
@@ -113,7 +173,7 @@ export class SessionReportsService {
 
     const rows = await this.prisma.liveLookup.findMany({
       where: { id: { in: [...expected.keys()] } },
-      select: { id: true, kind: true },
+      select: { id: true, kind: true, name: true },
     });
     const byId = new Map(rows.map((row) => [row.id, row.kind]));
 
@@ -122,5 +182,7 @@ export class SessionReportsService {
         throw new BadRequestException('Ca, phân loại, team hoặc kênh không hợp lệ');
       }
     }
+
+    return new Map(rows.map((row) => [row.id, row.name]));
   }
 }
