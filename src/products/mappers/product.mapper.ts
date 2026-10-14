@@ -23,6 +23,7 @@ export interface ProductResponse {
   readonly videoUrl: string | null;
   readonly sapoId: string | null;
   readonly sapoUrl: string | null;
+  readonly productType: string | null;
   readonly isActive: boolean;
   readonly variants: ProductVariantResponse[];
   readonly createdAt: string;
@@ -62,6 +63,7 @@ export function mapProductToResponse(product: ProductWithRelations): ProductResp
     videoUrl: product.videoUrl,
     sapoId: product.sapoId,
     sapoUrl: product.sapoUrl,
+    productType: product.productType,
     isActive: product.isActive,
     variants: product.variants.map(mapProductVariantToResponse),
     createdAt: product.createdAt.toISOString(),

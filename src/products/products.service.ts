@@ -56,6 +56,21 @@ export class ProductsService {
     };
   }
 
+  /** Danh sách cho bộ lọc Loại: mỗi nhóm ("NHẪN") đứng trước các loại của nó ("NHẪN >> Bạc"). */
+  async listProductTypes(): Promise<string[]> {
+    const rows = await this.prisma.product.findMany({
+      where: { productType: { not: null } },
+      distinct: ['productType'],
+      select: { productType: true },
+    });
+    const options = rows.flatMap(({ productType: type }) =>
+      type!.includes('>>') ? [type!.split('>>')[0].trim(), type!] : [type!],
+    );
+    // Sapo nhập lệch hoa/thường ("Bạc trang sức" / "Bạc Trang sức") — lọc không phân biệt nên gộp một.
+    const unique = new Map(options.map((o) => [o.toLocaleLowerCase('vi'), o]));
+    return [...unique.values()].sort((a, b) => a.localeCompare(b, 'vi'));
+  }
+
   async findOne(id: string): Promise<ProductResponse> {
     const product = await this.prisma.product.findUnique({
       where: { id },
@@ -217,6 +232,22 @@ export class ProductsService {
 
     if (query.isActive !== undefined) {
       filters.push({ isActive: query.isActive });
+    }
+
+    // Chọn nhóm "NHẪN" thì ra cả "NHẪN >> Bạc", "NHẪN >> Vàng"…; chọn loại đầy đủ thì đúng loại đó.
+    if (query.productType) {
+      filters.push({
+        OR: [
+          { productType: { equals: query.productType, mode: 'insensitive' } },
+          { productType: { startsWith: `${query.productType} >>`, mode: 'insensitive' } },
+        ],
+      });
+    }
+
+    if (query.minPrice !== undefined || query.maxPrice !== undefined) {
+      filters.push({
+        variants: { some: { price: { gte: query.minPrice, lte: query.maxPrice } } },
+      });
     }
 
     if (filters.length === 0) return {};
