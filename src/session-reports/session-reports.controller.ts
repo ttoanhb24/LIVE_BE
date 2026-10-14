@@ -8,7 +8,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { CurrentUser, Roles, STAFF_ROLES } from '../auth/decorators';
+import { ALL_ROLES, CurrentUser, Roles } from '../auth/decorators';
 import type { JwtPayloadUser } from '../auth/types';
 import type { DailyRankingsResponse } from './daily-rankings';
 import { CreateSessionReportDto } from './dto/create-session-report.dto';
@@ -30,13 +30,13 @@ export class SessionReportsController {
   constructor(private readonly sessionReportsService: SessionReportsService) {}
 
   @Get()
-  @Roles(...STAFF_ROLES)
+  @Roles(...ALL_ROLES)
   findAll(@Query() query: ListSessionReportsQueryDto) {
     return this.sessionReportsService.findAll(query);
   }
 
   @Get('daily-rankings')
-  @Roles(...STAFF_ROLES)
+  @Roles(...ALL_ROLES)
   dailyRankings(@Query() query: DailyRankingsQueryDto): Promise<DailyRankingsResponse> {
     return this.sessionReportsService.dailyRankings(query.from, query.to);
   }
