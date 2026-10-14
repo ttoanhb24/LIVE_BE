@@ -10,7 +10,7 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import { Roles, STAFF_ROLES } from '../auth/decorators';
+import { ALL_ROLES, Roles, STAFF_ROLES } from '../auth/decorators';
 import type { PaginatedResponse } from '../common/interfaces/paginated-response.interface';
 import { CreateLiveSessionDto } from './dto/create-live-session.dto';
 import { ListLiveSessionsQueryDto } from './dto/list-live-sessions-query.dto';
@@ -29,6 +29,7 @@ export class LiveSessionsController {
   constructor(private readonly liveSessionsService: LiveSessionsService) {}
 
   @Get()
+  @Roles(...ALL_ROLES)
   findAll(
     @Query() query: ListLiveSessionsQueryDto,
   ): Promise<PaginatedResponse<LiveSessionListResponse>> {
@@ -41,6 +42,7 @@ export class LiveSessionsController {
   }
 
   @Get(':id')
+  @Roles(...ALL_ROLES)
   findOne(@Param('id', ParseUUIDPipe) id: string): Promise<LiveSessionDetailResponse> {
     return this.liveSessionsService.findOne(id);
   }

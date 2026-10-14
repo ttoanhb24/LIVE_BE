@@ -14,7 +14,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { Roles, STAFF_ROLES } from '../auth/decorators';
+import { ALL_ROLES, Roles, STAFF_ROLES } from '../auth/decorators';
 import type { PaginatedResponse } from '../common/interfaces/paginated-response.interface';
 import { CreateProductDto } from './dto/create-product.dto';
 import { ListProductsQueryDto } from './dto/list-products-query.dto';
@@ -23,13 +23,14 @@ import type { ProductResponse } from './mappers/product.mapper';
 import { PRODUCT_IMAGE_MAX_BYTES } from './product-image.constants';
 import { ProductsService } from './products.service';
 
-/** CRUD sản phẩm — chỉ LEADER và ADMIN. */
+/** CRUD sản phẩm — ghi chỉ LEADER và ADMIN, MEMBER chỉ xem. */
 @Controller('products')
 @Roles(...STAFF_ROLES)
 export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
 
   @Get()
+  @Roles(...ALL_ROLES)
   findAll(
     @Query() query: ListProductsQueryDto,
   ): Promise<PaginatedResponse<ProductResponse>> {
@@ -52,6 +53,7 @@ export class ProductsController {
   }
 
   @Get(':id')
+  @Roles(...ALL_ROLES)
   findOne(@Param('id', ParseUUIDPipe) id: string): Promise<ProductResponse> {
     return this.productsService.findOne(id);
   }
