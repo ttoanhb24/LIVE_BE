@@ -3,8 +3,10 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { LiveLookupKind } from '@prisma/client';
-import { PrismaService } from '../prisma/prisma.service';
-import { SessionReportsService } from './session-reports.service';
+import { CloudinaryStorageService } from '../src/cloudinary/cloudinary-storage.service';
+import { PrismaService } from '../src/prisma/prisma.service';
+import { ReportSheetClient } from '../src/session-reports/report-sheet/report-sheet.client';
+import { SessionReportsService } from '../src/session-reports/session-reports.service';
 
 const decimal = (value: number) => ({ toNumber: () => value });
 
@@ -28,13 +30,14 @@ const inputDto = {
   retentionRate: 42.5,
   orderCount: 15,
   impressionCount: 8000,
+  imageUrl: 'https://res.cloudinary.com/jsmkvfyg/image/upload/v1/LIVE_VCB/session-reports/abc.jpg',
 };
 
 const lookups = [
-  { id: shiftId, kind: LiveLookupKind.SHIFT },
-  { id: liveTypeId, kind: LiveLookupKind.LIVE_TYPE },
-  { id: teamId, kind: LiveLookupKind.TEAM },
-  { id: channelId, kind: LiveLookupKind.CHANNEL },
+  { id: shiftId, kind: LiveLookupKind.SHIFT, name: 'Tối' },
+  { id: liveTypeId, kind: LiveLookupKind.LIVE_TYPE, name: 'Live mới' },
+  { id: teamId, kind: LiveLookupKind.TEAM, name: 'Team 1' },
+  { id: channelId, kind: LiveLookupKind.CHANNEL, name: 'Facebook' },
 ];
 
 describe('SessionReportsService', () => {
@@ -45,22 +48,32 @@ describe('SessionReportsService', () => {
     liveLookup: { findMany: jest.fn() },
     sessionReport: {
       create: jest.fn(),
+      findFirst: jest.fn(),
       findMany: jest.fn(),
       count: jest.fn(),
       groupBy: jest.fn(),
     },
     $transaction: jest.fn(),
   };
+  const reportSheet = { appendRow: jest.fn(), staffNames: jest.fn() };
 
   beforeEach(async () => {
     jest.clearAllMocks();
+    prisma.sessionReport.findFirst.mockResolvedValue(null);
+    reportSheet.appendRow.mockResolvedValue({ status: 'skipped' });
     const moduleRef = await Test.createTestingModule({
-      providers: [SessionReportsService, { provide: PrismaService, useValue: prisma }],
+      providers: [
+        SessionReportsService,
+        { provide: PrismaService, useValue: prisma },
+        { provide: ReportSheetClient, useValue: reportSheet },
+        { provide: CloudinaryStorageService, useValue: {} },
+      ],
     }).compile();
     service = moduleRef.get(SessionReportsService);
   });
 
   it('creates a report when the session and lookups match', async () => {
+    reportSheet.appendRow.mockResolvedValue({ status: 'synced', tab: 'BCDT T10/2026', row: 140 });
     prisma.liveSession.findUnique.mockResolvedValue({ id: sessionId });
     prisma.liveLookup.findMany.mockResolvedValue(lookups);
     prisma.sessionReport.create.mockResolvedValue({
@@ -86,7 +99,11 @@ describe('SessionReportsService', () => {
     expect(actual.staffName).toBe('Lan');
     expect(actual.shift.name).toBe('Tối');
     expect(actual.revenue).toBe(12000000);
+    expect(actual.sheetSync).toEqual({ status: 'synced', tab: 'BCDT T10/2026', row: 140 });
     expect(prisma.sessionReport.create).toHaveBeenCalledTimes(1);
+    expect(reportSheet.appendRow).toHaveBeenCalledWith(
+      expect.objectContaining({ liveDate: '2026-10-08', staffName: 'Lan', channel: 'Facebook' }),
+    );
   });
 
   it('lists reports newest live date first', async () => {
