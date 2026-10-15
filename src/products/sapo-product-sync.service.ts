@@ -43,7 +43,7 @@ const variantsKey = (variants: { sku: string; name: string | null; price: unknow
 
 /**
  * Kéo SP từ Sapo về, khớp theo sapoId: tên, ảnh, đang bán, biến thể (SKU, tên, giá).
- * Nút bấm quét toàn bộ; cron 23h chỉ lấy SP mới (id Sapo tăng dần → since_id).
+ * Nút bấm quét toàn bộ; cron 23:59 chỉ lấy SP mới (id Sapo tăng dần → since_id).
  */
 @Injectable()
 export class SapoProductSyncService {
@@ -70,7 +70,7 @@ export class SapoProductSyncService {
     return this.status;
   }
 
-  @Cron('0 0 23 * * *', { timeZone: 'Asia/Ho_Chi_Minh' })
+  @Cron('0 59 23 * * *', { timeZone: 'Asia/Ho_Chi_Minh' })
   async nightly(): Promise<void> {
     if (this.isConfigured() && !this.status.running) await this.run(true);
   }
