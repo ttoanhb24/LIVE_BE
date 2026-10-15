@@ -53,6 +53,7 @@ Vào **Settings → Secrets and variables → Actions → Secrets**:
    - `PORT=8080` (Dockerfile expose 8080 — hoặc để Railway tự inject `PORT`, app đã đọc `process.env.PORT`)
    - `CORS_ORIGIN=https://<domain-fe-tren-vercel>` (nhiều domain thì phân cách bằng dấu phẩy)
    - Các secret khác app cần (JWT, v.v. — xem `.env` local)
+   - `SAPO_STORE`, `SAPO_API_KEY`, `SAPO_API_SECRET` — đồng bộ sản phẩm từ Sapo (nút "Đồng bộ Sapo" ở trang Sản phẩm quét toàn bộ; 23:59 mỗi đêm tự lấy SP mới). Để trống thì tắt.
    - `REPORT_SHEET_WEBHOOK_URL`, `REPORT_SHEET_WEBHOOK_SECRET` — chép báo cáo kết thúc ca sang file Google Sheet báo cáo tổng. Cài Apps Script theo phần đầu file `scripts/google-sheet/report-webhook.gs`; để trống thì app bỏ qua bước ghi sheet.
 3. Tab **Settings → Networking**: bật Public Domain để lấy URL cho FE gọi API.
 4. Tạo **Project Token**: Project → Settings → Tokens → chọn environment production → copy vào secret `RAILWAY_TOKEN`.

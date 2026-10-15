@@ -35,6 +35,7 @@ function canAccess(controller: ControllerClass, handler: string, role: UserRole)
 const MEMBER_CAN_READ: Array<[string, ControllerClass, string]> = [
   ['products.findAll', ProductsController, 'findAll'],
   ['products.findOne', ProductsController, 'findOne'],
+  ['products.listProductTypes', ProductsController, 'listProductTypes'],
   ['script-blocks.findAll', ScriptBlocksController, 'findAll'],
   ['script-blocks.findOne', ScriptBlocksController, 'findOne'],
   ['live-sessions.findAll', LiveSessionsController, 'findAll'],
@@ -49,6 +50,8 @@ const STAFF_ONLY: Array<[string, ControllerClass, string]> = [
   ['products.uploadImage', ProductsController, 'uploadImage'],
   ['products.update', ProductsController, 'update'],
   ['products.remove', ProductsController, 'remove'],
+  ['products.startSapoSync', ProductsController, 'startSapoSync'],
+  ['products.sapoSyncStatus', ProductsController, 'sapoSyncStatus'],
   ['script-blocks.create', ScriptBlocksController, 'create'],
   ['script-blocks.generateMeaningSuggestion', ScriptBlocksController, 'generateMeaningSuggestion'],
   ['script-blocks.update', ScriptBlocksController, 'update'],

@@ -209,6 +209,8 @@ model Product {
   // package.json có script sapo:oauth:* nhưng file đã không còn (tàn dư repo mẫu).
   sapoId  String? @unique @map("sapo_id")
   sapoUrl String? @map("sapo_url")
+  // "Loại sản phẩm" của Sapo, dạng "NHẪN >> Bạc" — dùng lọc trên trang Sản phẩm.
+  productType String? @map("product_type")
 
   isActive  Boolean  @default(true) @map("is_active")
   createdAt DateTime @default(now()) @map("created_at")
