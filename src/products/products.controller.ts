@@ -22,16 +22,12 @@ import { UpdateProductDto } from './dto/update-product.dto';
 import type { ProductResponse } from './mappers/product.mapper';
 import { PRODUCT_IMAGE_MAX_BYTES } from './product-image.constants';
 import { ProductsService } from './products.service';
-import { SapoProductSyncService, type SapoSyncStatus } from './sapo-product-sync.service';
 
 /** CRUD sản phẩm — ghi chỉ LEADER và ADMIN, MEMBER chỉ xem. */
 @Controller('products')
 @Roles(...STAFF_ROLES)
 export class ProductsController {
-  constructor(
-    private readonly productsService: ProductsService,
-    private readonly sapoSync: SapoProductSyncService,
-  ) {}
+  constructor(private readonly productsService: ProductsService) {}
 
   @Get()
   @Roles(...ALL_ROLES)
@@ -54,17 +50,6 @@ export class ProductsController {
   )
   uploadImage(@UploadedFile() file: Express.Multer.File) {
     return this.productsService.uploadImage(file);
-  }
-
-  /** Đồng bộ từ Sapo chạy nền vài phút — FE gọi GET cùng đường dẫn để biết khi nào xong. */
-  @Post('sapo-sync')
-  startSapoSync(): SapoSyncStatus {
-    return this.sapoSync.start();
-  }
-
-  @Get('sapo-sync')
-  sapoSyncStatus(): SapoSyncStatus {
-    return this.sapoSync.getStatus();
   }
 
   @Get('types')

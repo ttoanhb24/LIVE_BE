@@ -50,8 +50,6 @@ const STAFF_ONLY: Array<[string, ControllerClass, string]> = [
   ['products.uploadImage', ProductsController, 'uploadImage'],
   ['products.update', ProductsController, 'update'],
   ['products.remove', ProductsController, 'remove'],
-  ['products.startSapoSync', ProductsController, 'startSapoSync'],
-  ['products.sapoSyncStatus', ProductsController, 'sapoSyncStatus'],
   ['script-blocks.create', ScriptBlocksController, 'create'],
   ['script-blocks.generateMeaningSuggestion', ScriptBlocksController, 'generateMeaningSuggestion'],
   ['script-blocks.update', ScriptBlocksController, 'update'],

@@ -66,7 +66,7 @@ export class ProductsService {
     const options = rows.flatMap(({ productType: type }) =>
       type!.includes('>>') ? [type!.split('>>')[0].trim(), type!] : [type!],
     );
-    // Sapo nhập lệch hoa/thường ("Bạc trang sức" / "Bạc Trang sức") — lọc không phân biệt nên gộp một.
+    // Chuẩn hóa lệch hoa/thường ("Bạc trang sức" / "Bạc Trang sức") — lọc không phân biệt nên gộp một.
     const unique = new Map(options.map((o) => [o.toLocaleLowerCase('vi'), o]));
     return [...unique.values()].sort((a, b) => a.localeCompare(b, 'vi'));
   }
